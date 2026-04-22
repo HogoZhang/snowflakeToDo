@@ -1,6 +1,21 @@
 # Snowflake
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Electron](https://img.shields.io/badge/Electron-electron-blue)](https://www.electronjs.org/)
+[![React](https://img.shields.io/badge/React-react-blueviolet)]
+[![Node](https://img.shields.io/badge/Node-nodejs-green)]
+
 Snowflake 是一个基于 Electron、React 和 TypeScript 的离线桌面应用，用于个人任务管理、日记总结、时间追踪、统计分析，以及本地数据导入导出。
+
+## UI Preview
+
+### Home
+
+![Home Preview](./home.png)
+
+### App Config
+
+![App Config Preview](./app_config.png)
 
 ## Development
 
@@ -54,3 +69,10 @@ npm run dist:win
 - `npm run test`
 - `npm run dist:win`
 - 按 [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) 完成手动回归
+
+## 贡献
+
+欢迎提交 Issue 和 PR 共同维护项目：
+
+- [Issues](../../issues)
+- [Pull Requests](../../pulls)
