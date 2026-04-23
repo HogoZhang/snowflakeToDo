@@ -11,11 +11,11 @@ Snowflake 是一个基于 Electron、React 和 TypeScript 的离线桌面应用�
 
 ### Home
 
-![Home Preview](./home.png)
+![Home Preview](./resources/imgs/home.png)
 
 ### App Config
 
-![App Config Preview](./app_config.png)
+![App Config Preview](./resources/imgs/app_config.png)
 
 ## Development
 
@@ -61,6 +61,10 @@ npm run dist:win
 最近一次验证已成功产出：
 - `dist/Snowflake-0.1.0-setup-x64.exe`
 - `dist/win-unpacked/`
+
+安装包下载：
+- [Snowflake-0.1.0-setup-x64.exe（百度网盘）](https://pan.baidu.com/s/1OTc8szqDVTVA2qopwcxq4g?pwd=1024)
+- 提取码：`1024`
 
 ## Release Checklist
 
