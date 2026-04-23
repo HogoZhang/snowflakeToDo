@@ -33,6 +33,7 @@
     "electron-builder": "^26.8.1",
     "electron-vite": "^4.0.0",
     "jsdom": "^29.0.2",
+    "png-to-ico": "^3.0.1",
     "typescript": "^5.9.3",
     "vite": "^7.1.12",
     "vitest": "^3.2.4"
@@ -51,9 +52,10 @@
       "package.json",
       "resources/**/*"
     ],
+    "icon": "resources/icons/app.ico",
     "win": {
-      "signAndEditExecutable": false,
-      "icon": "resources/icons/app-icon.png",
+      "signAndEditExecutable": true,
+      "icon": "resources/icons/app.ico",
       "target": [
         {
           "target": "nsis",
