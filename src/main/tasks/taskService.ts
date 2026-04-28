@@ -253,42 +253,24 @@ export class TaskService {
           timeLog.endAt === null ? 0 : calculateDurationMinutes(timeLog.startAt, timeLog.endAt)
       }))
 
-    const openLogs = [...timeLogs]
-      .filter((timeLog) => timeLog.endAt === null)
-      .sort((left, right) => Date.parse(left.startAt) - Date.parse(right.startAt))
+    const activeLogs = timeLogs.filter((timeLog) => timeLog.endAt === null)
 
-    const latestOpenLog = openLogs.at(-1) ?? null
-    if (openLogs.length > 1 && latestOpenLog) {
-      const latestStartAt = latestOpenLog.startAt
-      timeLogs = timeLogs.map((timeLog) => {
-        if (timeLog.id === latestOpenLog.id || timeLog.endAt !== null) {
-          return timeLog
-        }
-
-        return {
-          ...timeLog,
-          endAt: latestStartAt,
-          durationMinutes: calculateDurationMinutes(timeLog.startAt, latestStartAt)
-        }
-      })
+    for (const activeLog of activeLogs) {
+      const activeTask = tasks.find((task) => task.id === activeLog.taskId)
+      if (activeTask && (activeTask.status === 'done' || activeTask.status === 'archived')) {
+        timeLogs = timeLogs.map((timeLog) =>
+          timeLog.id === activeLog.id
+            ? {
+                ...timeLog,
+                endAt: now,
+                durationMinutes: calculateDurationMinutes(timeLog.startAt, now)
+              }
+            : timeLog
+        )
+      }
     }
 
-    const activeLog = timeLogs.find((timeLog) => timeLog.endAt === null) ?? null
-    const activeTask = activeLog ? tasks.find((task) => task.id === activeLog.taskId) ?? null : null
-
-    if (activeLog && activeTask && (activeTask.status === 'done' || activeTask.status === 'archived')) {
-      timeLogs = timeLogs.map((timeLog) =>
-        timeLog.id === activeLog.id
-          ? {
-              ...timeLog,
-              endAt: now,
-              durationMinutes: calculateDurationMinutes(timeLog.startAt, now)
-            }
-          : timeLog
-      )
-    }
-
-    const resolvedActiveLog = timeLogs.find((timeLog) => timeLog.endAt === null) ?? null
+    const resolvedActiveLogs = timeLogs.filter((timeLog) => timeLog.endAt === null)
     const stored = this.buildDocument(
       document.version ?? DEFAULT_TASK_DOCUMENT.version,
       tasks,
@@ -296,7 +278,7 @@ export class TaskService {
       timeLogs,
       now,
       false,
-      resolvedActiveLog
+      resolvedActiveLogs
     )
     const runtime = this.buildDocument(
       document.version ?? DEFAULT_TASK_DOCUMENT.version,
@@ -305,7 +287,7 @@ export class TaskService {
       timeLogs,
       now,
       true,
-      resolvedActiveLog
+      resolvedActiveLogs
     )
 
     return {
@@ -322,7 +304,7 @@ export class TaskService {
     timeLogs: TimeLog[],
     now: string,
     includeActiveElapsed: boolean,
-    activeLog: TimeLog | null
+    activeLogs: TimeLog[]
   ): TaskDocument {
     return {
       version,
@@ -333,7 +315,8 @@ export class TaskService {
         const closedMinutes = taskTimeLogs
           .filter((timeLog) => timeLog.endAt !== null)
           .reduce((sum, timeLog) => sum + timeLog.durationMinutes, 0)
-        const isActive = activeLog?.taskId === task.id
+        const activeLog = activeLogs.find((log) => log.taskId === task.id)
+        const isActive = activeLog !== undefined
         const activeMinutes =
           isActive && includeActiveElapsed
             ? calculateDurationMinutes(activeLog.startAt, now)
@@ -342,7 +325,7 @@ export class TaskService {
         return {
           ...task,
           actualMinutes: isActive && !includeActiveElapsed ? normalizeMinutes(task.actualMinutes, closedMinutes) : closedMinutes + activeMinutes,
-          status: isActive ? 'in_progress' : task.status === 'in_progress' ? 'todo' : task.status
+          status: isActive ? 'in_progress' : task.status
         }
       })
     }
@@ -358,8 +341,10 @@ export class TaskService {
       throw new Error('Completed tasks cannot start a timer.')
     }
 
-    const activeLog = document.timeLogs.find((timeLog) => timeLog.endAt === null) ?? null
-    if (activeLog?.taskId === taskId) {
+    const existingActiveLog = document.timeLogs.find(
+      (timeLog) => timeLog.endAt === null && timeLog.taskId === taskId
+    )
+    if (existingActiveLog) {
       return this.normalizeDocument(document).runtime
     }
 
@@ -376,26 +361,10 @@ export class TaskService {
           }
         }
 
-        if (activeLog?.taskId === task.id) {
-          return {
-            ...task,
-            status: 'todo',
-            updatedAt: now
-          }
-        }
-
         return task
       }),
       timeLogs: [
-        ...document.timeLogs.map((timeLog) =>
-          timeLog.id === activeLog?.id
-            ? {
-                ...timeLog,
-                endAt: now,
-                durationMinutes: calculateDurationMinutes(timeLog.startAt, now)
-              }
-            : timeLog
-        ),
+        ...document.timeLogs,
         {
           id: createId(),
           taskId,
