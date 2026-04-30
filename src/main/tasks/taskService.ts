@@ -384,10 +384,9 @@ export class TaskService {
     nextStatus: Exclude<TaskStatus, 'in_progress'>,
     input: UpdateTaskInput
   ): Promise<TaskDocument> {
-    const activeLog = document.timeLogs.find((timeLog) => timeLog.endAt === null) ?? null
-    if (!activeLog || activeLog.taskId !== taskId) {
-      throw new Error('Task timer is not active.')
-    }
+    const activeLog = document.timeLogs.find(
+      (timeLog) => timeLog.endAt === null && timeLog.taskId === taskId
+    ) ?? null
 
     const now = new Date().toISOString()
     const nextDocument: TaskDocument = {
@@ -415,15 +414,17 @@ export class TaskService {
           updatedAt: now
         }
       }),
-      timeLogs: document.timeLogs.map((timeLog) =>
-        timeLog.id === activeLog.id
-          ? {
-              ...timeLog,
-              endAt: now,
-              durationMinutes: calculateDurationMinutes(timeLog.startAt, now)
-            }
-          : timeLog
-      )
+      timeLogs: activeLog
+        ? document.timeLogs.map((timeLog) =>
+            timeLog.id === activeLog.id
+              ? {
+                  ...timeLog,
+                  endAt: now,
+                  durationMinutes: calculateDurationMinutes(timeLog.startAt, now)
+                }
+              : timeLog
+          )
+        : document.timeLogs
     }
 
     return this.saveDocument(nextDocument, IMMEDIATE_WRITE_MS)
